@@ -52,7 +52,7 @@ python main.py
    docker build -t openai-websearch-api .
    ```
    
-   **Linux:** (may require sudo)
+   **Linux:**
    ```
    sudo docker build -t openai-websearch-api .
    ```
@@ -64,25 +64,44 @@ python main.py
    docker-compose up -d
    ```
    
-   **Linux:** (using docker compose plugin)
+   **Linux:** Try one of these commands (depending on your Docker installation):
    ```
-   sudo docker compose up -d
-   ```
+   # If using Docker Compose V2 as a plugin
+   sudo docker compose up --detach
    
-   **Note:** If you get "docker-compose: command not found" on Linux, use one of these alternatives:
-   ```
-   # If using Docker Compose V2 (plugin)
-   sudo docker compose up -d
-   
-   # If docker-compose is installed as a standalone package
+   # If using standalone docker-compose
    sudo docker-compose up -d
    
-   # If docker-compose is not installed
-   sudo apt install docker-compose-plugin  # For Debian/Ubuntu
-   sudo yum install docker-compose-plugin  # For CentOS/RHEL
+   # If neither works, install Docker Compose:
+   
+   # For Debian/Ubuntu:
+   sudo apt update
+   sudo apt install -y docker-compose-plugin
+   # Then use: sudo docker compose up --detach
+   
+   # OR install standalone docker-compose:
+   sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+   sudo chmod +x /usr/local/bin/docker-compose
+   # Then use: sudo docker-compose up -d
    ```
 
-3. **Verify deployment**
+3. **Stop the container** (when needed)
+   
+   **Windows:**
+   ```
+   docker-compose down
+   ```
+   
+   **Linux:**
+   ```
+   # If using Docker Compose V2
+   sudo docker compose down
+   
+   # If using standalone docker-compose
+   sudo docker-compose down
+   ```
+
+4. **Verify deployment**
    
    **Windows:**
    ```
