@@ -1,6 +1,6 @@
 # N8N Personal Assistant
 
-A Flask-based API service that integrates with OpenAI's GPT models to provide AI assistance.
+A Flask-based API service that integrates with OpenAI's GPT models to provide AI assistance. The most crucial part of this project is that we're using the `gpt-4o-search-preview` model, which is a new model that allows us to search the web.
 
 ## Features
 
