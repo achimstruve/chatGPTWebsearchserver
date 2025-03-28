@@ -46,19 +46,54 @@ python main.py
 #### Option 2: Deploy with Docker (Recommended)
 
 1. **Build the Docker image**
+   
+   **Windows:**
    ```
    docker build -t openai-websearch-api .
    ```
+   
+   **Linux:** (may require sudo)
+   ```
+   sudo docker build -t openai-websearch-api .
+   ```
 
 2. **Start the container**
+   
+   **Windows:**
    ```
    docker-compose up -d
    ```
+   
+   **Linux:** (using docker compose plugin)
+   ```
+   sudo docker compose up -d
+   ```
+   
+   **Note:** If you get "docker-compose: command not found" on Linux, use one of these alternatives:
+   ```
+   # If using Docker Compose V2 (plugin)
+   sudo docker compose up -d
+   
+   # If docker-compose is installed as a standalone package
+   sudo docker-compose up -d
+   
+   # If docker-compose is not installed
+   sudo apt install docker-compose-plugin  # For Debian/Ubuntu
+   sudo yum install docker-compose-plugin  # For CentOS/RHEL
+   ```
 
 3. **Verify deployment**
+   
+   **Windows:**
    ```
    docker ps
    ```
+   
+   **Linux:**
+   ```
+   sudo docker ps
+   ```
+   
    You should see your container running and listening on port 5000.
 
 #### Option 3: Deploy with Docker and Cloudflare Tunnel (Production)
@@ -160,19 +195,35 @@ To deploy on a VPS:
    **Ubuntu/Debian:**
    ```
    sudo apt update
-   sudo apt install -y docker.io docker-compose
+   sudo apt install -y docker.io
+   
+   # Install Docker Compose V2 (plugin method)
+   sudo apt install -y docker-compose-plugin
+   
+   # OR install standalone docker-compose
+   sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+   sudo chmod +x /usr/local/bin/docker-compose
+   
    sudo systemctl enable docker
    sudo systemctl start docker
    ```
    
    **CentOS/RHEL:**
    ```
-   sudo yum install -y docker docker-compose
+   sudo yum install -y docker
+   
+   # Install Docker Compose V2 (plugin method)
+   sudo yum install -y docker-compose-plugin
+   
+   # OR install standalone docker-compose
+   sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+   sudo chmod +x /usr/local/bin/docker-compose
+   
    sudo systemctl enable docker
    sudo systemctl start docker
    ```
 
-3. Follow the Docker deployment steps above
+3. Follow the Docker deployment steps above (using sudo for all Docker commands)
 
 4. Install cloudflared on the VPS:
    ```
@@ -217,4 +268,9 @@ To deploy on a VPS:
 - **Cloudflare URL Changes**: The free quick tunnel URL changes each time you restart the tunnel
 - **Rate Limiting**: Be mindful of OpenAI API rate limits and costs
 - **Error Handling**: The API includes basic error handling for OpenAI API issues
-- **Linux Permissions**: If running on Linux, ensure proper permissions for Docker and cloudflared 
+- **Linux Permissions**: If running on Linux, ensure proper permissions for Docker and cloudflared
+- **Docker without sudo**: To run Docker without sudo on Linux, add your user to the docker group:
+  ```
+  sudo usermod -aG docker $USER
+  # Log out and log back in for changes to take effect
+  ``` 
