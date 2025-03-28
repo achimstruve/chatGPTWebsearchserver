@@ -17,7 +17,7 @@ A Flask-based API service that integrates with OpenAI's GPT models to provide AI
 - Docker and Docker Compose
 - OpenAI API key
 - n8n instance (for workflow integration)
-- Windows environment (for Cloudflare Tunnel commands)
+- Windows or Linux environment
 
 ### Basic Setup
 
@@ -66,6 +66,8 @@ python main.py
 1. **Deploy the Docker container** (follow Option 2 steps)
 
 2. **Set up Cloudflare Tunnel**
+
+   **Windows:**
    - Download cloudflared:
      ```
      Invoke-WebRequest -Uri https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe -OutFile cloudflared.exe
@@ -74,13 +76,27 @@ python main.py
      ```
      .\cloudflared.exe tunnel --url http://localhost:5000
      ```
-   - Note the assigned URL (e.g., `https://something-random-name.trycloudflare.com`)
+   - Keep the tunnel running in the background:
+     ```
+     Start-Process -NoNewWindow .\cloudflared.exe -ArgumentList "tunnel --url http://localhost:5000"
+     ```
 
-3. **Keep the tunnel running** (optional)
-   To run the tunnel in the background:
-   ```
-   Start-Process -NoNewWindow .\cloudflared.exe -ArgumentList "tunnel --url http://localhost:5000"
-   ```
+   **Linux:**
+   - Download and install cloudflared:
+     ```
+     curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+     sudo dpkg -i cloudflared.deb
+     ```
+   - Start a tunnel:
+     ```
+     cloudflared tunnel --url http://localhost:5000
+     ```
+   - Keep the tunnel running in the background:
+     ```
+     nohup cloudflared tunnel --url http://localhost:5000 > cloudflared.log 2>&1 &
+     ```
+
+3. **Note the assigned URL** (e.g., `https://something-random-name.trycloudflare.com`)
 
 ## API Usage
 
@@ -101,7 +117,7 @@ Example with curl:
 curl -X POST http://localhost:5000/ask -H "Content-Type: application/json" -d "{\"prompt\":\"What is the current Bitcoin price?\"}"
 ```
 
-Example with PowerShell:
+Example with PowerShell (Windows):
 ```
 Invoke-WebRequest -Uri "http://localhost:5000/ask" -Method POST -ContentType "application/json" -Body '{"prompt":"What is the current Bitcoin price?"}'
 ```
@@ -127,15 +143,78 @@ Configure an HTTP Request node in n8n:
 
 To deploy on a VPS:
 
-1. Transfer all project files to your VPS
-2. Install Docker and Docker Compose
+1. Transfer all project files to your VPS:
+   
+   **Windows to Linux VPS:**
+   ```
+   scp -r ./* user@your-vps-ip:/path/to/app/
+   ```
+   
+   **Linux to Linux VPS:**
+   ```
+   rsync -avz --exclude 'venv' --exclude '.git' ./ user@your-vps-ip:/path/to/app/
+   ```
+
+2. Install Docker and Docker Compose on VPS:
+   
+   **Ubuntu/Debian:**
+   ```
+   sudo apt update
+   sudo apt install -y docker.io docker-compose
+   sudo systemctl enable docker
+   sudo systemctl start docker
+   ```
+   
+   **CentOS/RHEL:**
+   ```
+   sudo yum install -y docker docker-compose
+   sudo systemctl enable docker
+   sudo systemctl start docker
+   ```
+
 3. Follow the Docker deployment steps above
-4. Install cloudflared on the VPS if using Cloudflare Tunnel
-5. Run the tunnel command on the VPS
+
+4. Install cloudflared on the VPS:
+   ```
+   curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+   sudo dpkg -i cloudflared.deb
+   ```
+
+5. Run the tunnel command on the VPS:
+   ```
+   nohup cloudflared tunnel --url http://localhost:5000 > cloudflared.log 2>&1 &
+   ```
+
+6. To make the tunnel start automatically on system boot, create a systemd service:
+   ```
+   sudo nano /etc/systemd/system/cloudflared.service
+   ```
+   
+   Add the following content:
+   ```
+   [Unit]
+   Description=Cloudflare Tunnel
+   After=network.target
+
+   [Service]
+   ExecStart=/usr/local/bin/cloudflared tunnel --url http://localhost:5000
+   Restart=always
+   User=ubuntu
+
+   [Install]
+   WantedBy=multi-user.target
+   ```
+   
+   Enable and start the service:
+   ```
+   sudo systemctl enable cloudflared
+   sudo systemctl start cloudflared
+   ```
 
 ## Important Notes
 
 - **API Security**: Consider adding authentication for production deployments
 - **Cloudflare URL Changes**: The free quick tunnel URL changes each time you restart the tunnel
 - **Rate Limiting**: Be mindful of OpenAI API rate limits and costs
-- **Error Handling**: The API includes basic error handling for OpenAI API issues 
+- **Error Handling**: The API includes basic error handling for OpenAI API issues
+- **Linux Permissions**: If running on Linux, ensure proper permissions for Docker and cloudflared 
