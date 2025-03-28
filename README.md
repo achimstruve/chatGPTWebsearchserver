@@ -59,61 +59,82 @@ python main.py
 
 2. **Start the container**
    
-   **Windows:**
-   ```
-   docker-compose up -d
+   The docker-compose.yml uses host network mode for better compatibility with n8n:
+   ```yaml
+   version: '3'
+   
+   services:
+     openai-websearch-api:
+       build: .
+       network_mode: "host"
+       env_file: 
+         - .env
+       restart: unless-stopped
    ```
    
-   **Linux:** Try one of these commands (depending on your Docker installation):
+   Start the container:
    ```
-   # If using Docker Compose V2 as a plugin
-   sudo docker compose up --detach
-   
-   # If using standalone docker-compose
    sudo docker-compose up -d
-   
-   # If neither works, install Docker Compose:
-   
-   # For Debian/Ubuntu:
-   sudo apt update
-   sudo apt install -y docker-compose-plugin
-   # Then use: sudo docker compose up --detach
-   
-   # OR install standalone docker-compose:
-   sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-   sudo chmod +x /usr/local/bin/docker-compose
-   # Then use: sudo docker-compose up -d
    ```
 
-3. **Stop the container** (when needed)
-   
-   **Windows:**
-   ```
-   docker-compose down
-   ```
-   
-   **Linux:**
-   ```
-   # If using Docker Compose V2
-   sudo docker compose down
-   
-   # If using standalone docker-compose
-   sudo docker-compose down
-   ```
-
-4. **Verify deployment**
-   
-   **Windows:**
-   ```
-   docker ps
-   ```
-   
-   **Linux:**
+3. **Verify deployment**
    ```
    sudo docker ps
    ```
-   
-   You should see your container running and listening on port 5000.
+   You should see your container running and using the host network.
+
+4. **Find your host IP** (for n8n configuration):
+   ```
+   ip addr show
+   ```
+   Look for your main network interface (usually eth0 or ens4). For example:
+   ```
+   2: ens4: <BROADCAST,MULTICAST,UP,LOWER_UP> ...
+       inet 10.138.0.2/32 ...
+   ```
+   Note down this IP address (in this example, 10.138.0.2).
+
+### n8n Integration
+
+Configure an HTTP Request node in n8n:
+
+1. **Set the request details**:
+   - URL: `http://your.host.ip:5000/ask` (e.g., `http://10.138.0.2:5000/ask`)
+   - Method: `POST`
+   - Headers: `Content-Type: application/json`
+   - Body: 
+     ```json
+     {
+       "prompt": {{$json.intent}}
+     }
+     ```
+
+2. **Process the response** in subsequent nodes using `{{$json.response}}`
+
+### Troubleshooting n8n Connection
+
+If you encounter connection issues:
+
+1. **Verify the API is running**:
+   ```
+   curl -X POST http://localhost:5000/ask -H "Content-Type: application/json" -d "{\"prompt\":\"test\"}"
+   ```
+
+2. **Check container logs**:
+   ```
+   sudo docker logs $(sudo docker ps -q --filter ancestor=openai-websearch-api)
+   ```
+
+3. **Verify network access**:
+   ```
+   # Test from the host machine
+   curl -X POST http://your.host.ip:5000/ask -H "Content-Type: application/json" -d "{\"prompt\":\"test\"}"
+   ```
+
+4. **Common issues and solutions**:
+   - If n8n can't connect, ensure it's running on the same network or has access to the host network
+   - If the host IP changes, update the n8n HTTP Request node URL accordingly
+   - For security, consider setting up proper network isolation in production environments
 
 #### Option 3: Deploy with Docker and Cloudflare Tunnel (Production)
 
@@ -292,4 +313,7 @@ To deploy on a VPS:
   ```
   sudo usermod -aG docker $USER
   # Log out and log back in for changes to take effect
-  ``` 
+  ```
+- **Network Mode**: Using host network mode provides better compatibility with n8n but may not be suitable for all production environments
+- **Security**: When using host network mode, your API is accessible on your host's network interface. Consider implementing additional security measures
+- **IP Address**: The host IP may change after system restart on some cloud platforms. Update your n8n configuration accordingly 
