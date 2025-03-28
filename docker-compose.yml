@@ -7,10 +7,3 @@ services:
     env_file: 
       - .env
     restart: unless-stopped
-    networks:
-      - n8n-network
-
-networks:
-  n8n-network:
-    external: true
-    name: br-b42ed81942d7 
