@@ -302,6 +302,72 @@ To deploy on a VPS:
    sudo systemctl start cloudflared
    ```
 
+## System Restart Handling
+
+### Automatic Container Restart
+
+The Docker containers are configured to restart automatically on system boot thanks to the `restart: unless-stopped` directive in docker-compose.yml. This ensures your API service comes back online automatically after a VM restart.
+
+### Additional Services
+
+After a system restart, some additional services might need manual restart or verification:
+
+1. **Nginx** (if used as reverse proxy):
+   ```bash
+   # Check nginx status
+   sudo systemctl status nginx
+   
+   # Restart nginx if needed
+   sudo systemctl restart nginx
+   ```
+
+2. **Verify all services are running**:
+   ```bash
+   # Check Docker containers
+   sudo docker ps
+   
+   # Check nginx
+   sudo systemctl status nginx
+   
+   # Check cloudflared (if using tunnel)
+   sudo systemctl status cloudflared
+   ```
+
+### Automating Service Restarts
+
+To ensure nginx restarts automatically after system boot:
+```bash
+# Enable nginx to start on boot
+sudo systemctl enable nginx
+
+# Verify it's enabled
+sudo systemctl is-enabled nginx
+```
+
+You can also create a simple restart script:
+```bash
+# Create a restart script
+sudo nano /usr/local/bin/restart-services.sh
+```
+
+Add this content:
+```bash
+#!/bin/bash
+sudo systemctl restart nginx
+sudo docker-compose -f /path/to/your/docker-compose.yml up -d
+sudo systemctl restart cloudflared  # if using Cloudflare tunnel
+```
+
+Make it executable:
+```bash
+sudo chmod +x /usr/local/bin/restart-services.sh
+```
+
+You can run this script manually after a system restart if needed:
+```bash
+sudo /usr/local/bin/restart-services.sh
+```
+
 ## Important Notes
 
 - **API Security**: Consider adding authentication for production deployments
